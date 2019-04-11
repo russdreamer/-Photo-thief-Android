@@ -23,6 +23,7 @@ class Events : Fragment() {
     private lateinit var statusTxt: TextView
     private lateinit var tryAgainBtn: Button
     private lateinit var eventList: LinearLayout
+    private var threadJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -56,7 +57,7 @@ class Events : Fragment() {
     }
 
     private fun getGridContent() {
-        val job = GlobalScope.launch{
+        threadJob = GlobalScope.launch{
 
             val events = withTimeoutOrNull(10_000L){
                 try {
@@ -83,6 +84,7 @@ class Events : Fragment() {
                 }
             }
         }
+
     }
 
     private fun setParsingErrorMsg() {
@@ -109,4 +111,10 @@ class Events : Fragment() {
     }
 
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        if (threadJob != null)
+            threadJob!!.cancel()
+    }
 }
