@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                             xmlns:app="http://schemas.android.com/apk/res-auto"
+                                             xmlns:tools="http://schemas.android.com/tools"
+                                             android:layout_width="match_parent"
+                                             android:layout_height="match_parent"
+                                             tools:context=".fragments.GettingWaysMenu" android:id="@+id/frameLayout"
+                                             android:background="@android:color/holo_green_light">
+    <ImageView
+            android:src="@android:color/background_light"
+            android:layout_width="0dp"
+            android:layout_height="0dp" android:id="@+id/bg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" android:layout_margin="10dp"
+            android:fadingEdge="none"/>
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="@+id/bg" app:layout_constraintTop_toTopOf="@+id/bg"
+            app:layout_constraintStart_toStartOf="@+id/bg" app:layout_constraintEnd_toEndOf="@+id/bg"
+            android:layout_margin="10dp">
+        <Button
+                android:text="ПО НОМЕРУ УЧАСТНИКА"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/on_number_button" android:layout_weight="1"
+                android:textSize="30sp" android:textStyle="bold" android:textColor="@android:color/white"
+                android:background="@drawable/green_btn_effect"/>
+        <Button
+                android:text="ПО ID ФОТО"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/on_id_button" android:layout_weight="1"
+                android:textSize="30sp" android:textStyle="bold"
+                android:background="@drawable/sky_btn_effect" android:textColor="@android:color/white"/>
+    </LinearLayout>
+</android.support.constraint.ConstraintLayout>
