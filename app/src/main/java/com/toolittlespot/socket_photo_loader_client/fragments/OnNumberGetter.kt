@@ -6,13 +6,19 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import com.toolittlespot.socket_photo_loader_client.MainActivity
 
 import com.toolittlespot.socket_photo_loader_client.R
-import java.net.URLEncoder
+import com.toolittlespot.socket_photo_loader_client.logics.showToast
 
 
 class OnNumberGetter : Fragment() {
-    lateinit var eventName: String
+    private lateinit var fragmentView: View
+    private lateinit var eventName: String
+    private lateinit var numberTxt: EditText
 
     fun passEventName(name: String){
         eventName = name
@@ -22,10 +28,29 @@ class OnNumberGetter : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        println(URLEncoder.encode(eventName, "UTF-8"))
-        return inflater.inflate(R.layout.fragment_on_number_getter, container, false)
+
+        fragmentView = inflater.inflate(R.layout.fragment_on_number_getter, container, false)
+        configViews()
+
+
+        return fragmentView
     }
 
+    private fun configViews() {
+        fragmentView.findViewById<TextView>(R.id.event_name_txt).text = eventName
+        numberTxt = fragmentView.findViewById(R.id.number_txt)
+        configOkBtn()
+    }
 
+    private fun configOkBtn() {
+        fragmentView.findViewById<Button>(R.id.ok_btn).setOnClickListener {
+            if (numberTxt.text.isEmpty())
+                showToast(context!!, "Введите стартовый номер!")
+            else {
+                val fragment = Photos()
+                fragment.passParams(eventName, numberTxt.text.toString())
+                (activity as MainActivity).changeMainLayout(fragment)
+            }
+        }
+    }
 }
