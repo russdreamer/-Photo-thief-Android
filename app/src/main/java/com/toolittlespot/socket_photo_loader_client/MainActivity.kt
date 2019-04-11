@@ -5,6 +5,10 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.view.Window
 import android.view.WindowManager
+import com.toolittlespot.socket_photo_loader_client.fragments.GettingWaysMenu
+import android.os.StrictMode
+
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -13,6 +17,17 @@ class MainActivity : AppCompatActivity() {
         makeFullScreen()
         setContentView(R.layout.activity_main)
         supportActionBar!!.hide()
+        setPermission()
+        startApplication()
+    }
+
+    private fun setPermission() {
+        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
+        StrictMode.setThreadPolicy(policy)
+    }
+
+    private fun startApplication() {
+        changeMainLayout(GettingWaysMenu())
     }
 
     private fun makeFullScreen() {
