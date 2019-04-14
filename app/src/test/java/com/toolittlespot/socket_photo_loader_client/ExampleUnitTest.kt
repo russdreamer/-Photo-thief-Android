@@ -12,6 +12,10 @@ import org.junit.Assert.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
+        val str = "/static/preview1/someImg.jpg"
+        val newStr = str.replace(Regex("preview([0-9])"), "preview2")
+        println(str)
+        println(newStr)
         assertEquals(4, 2 + 2)
     }
 }

@@ -7,7 +7,7 @@ class Event(val name: String, val date: String){
     companion object {
         fun getAllEvents(): List<Event>{
             val eventsURL = "https://marathon-photo.ru/members/categories.php"
-            var doc = Jsoup.connect(eventsURL).get()
+            val doc = Jsoup.connect(eventsURL).get()
             val pastComp = doc.getElementsByClass("past_competitions_list")
             val table = pastComp.select("table")
             val events = table.select("tr")
@@ -19,11 +19,14 @@ class Event(val name: String, val date: String){
             }
         }
 
-        fun generateGaleryLink(eventName: String, number: String): String{
-            val rootURL = "https://marathon-photo.ru/index.php?sphoto=on&competition="
+        fun generateGalleryLink(eventName: String, number: String, page: Int): String{
+            val rootURL = "https://marathon-photo.ru/members/ajax.php?page="
+            val competition = "&competition="
+            val person = "&sphoto=on&search="
+            val tailLink = "&partly=0&search_by_title=0"
             val eventNameURL = URLEncoder.encode(eventName, "UTF-8")
 
-            return "$rootURL$eventNameURL&$number"
+            return "$rootURL$page$competition$eventNameURL$person$number$tailLink"
         }
     }
 }

@@ -57,31 +57,28 @@ class Events : Fragment() {
     }
 
     private fun getGridContent() {
-        threadJob = GlobalScope.launch{
+        threadJob = GlobalScope.launch(Dispatchers.Main){
 
-            val events = withTimeoutOrNull(10_000L){
-                try {
+            val events = withTimeoutOrNull(10_000L) {
+                val task = GlobalScope.async {
                     Event.getAllEvents()
                 }
-                catch (e: IOException){
-                    activity!!.runOnUiThread {
-                        setNetworkErrorMsg()
-                    }
-                    null
+
+                try {
+                   task.await()
                 }
-                catch (e: Exception){
-                    activity!!.runOnUiThread {
-                        setParsingErrorMsg()
+                catch (e: Exception) {
+                    when (e) {
+                        is IOException, is TimeoutCancellationException -> setNetworkErrorMsg()
+                        else -> setParsingErrorMsg()
                     }
                     null
                 }
             }
 
             if (! events.isNullOrEmpty()){
-                activity!!.runOnUiThread{
-                    fillEvents(events)
-                    statusTxt.visibility = View.GONE
-                }
+                fillEvents(events)
+                statusTxt.visibility = View.GONE
             }
         }
 
