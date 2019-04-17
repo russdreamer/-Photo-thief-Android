@@ -3,4 +3,7 @@
     <color name="colorPrimary">#2CE80F</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+    <color name="eventColor">#225998</color>
+    <color name="blackCover">#86000000</color>
+    <color name="selectedColor">#2DDF12</color>
 </resources>

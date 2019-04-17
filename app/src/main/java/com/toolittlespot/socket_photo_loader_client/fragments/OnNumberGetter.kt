@@ -38,7 +38,7 @@ class OnNumberGetter : Fragment() {
 
     private fun configViews() {
         fragmentView.findViewById<TextView>(R.id.event_name_txt).text = eventName
-        numberTxt = fragmentView.findViewById(R.id.number_txt)
+        numberTxt = fragmentView.findViewById(R.id.id_txt)
         configOkBtn()
     }
 

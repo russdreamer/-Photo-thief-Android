@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                                             xmlns:app="http://schemas.android.com/apk/res-auto"
+                                             xmlns:tools="http://schemas.android.com/tools"
+                                             android:layout_width="match_parent"
+                                             android:layout_height="match_parent"
+                                             tools:context=".fragments.ResultViewer" android:id="@+id/frameLayout6"
+                                             android:background="@android:color/holo_green_light">
+
+    <ImageView
+            android:src="@android:color/background_light"
+            android:layout_width="0dp"
+            android:layout_height="0dp" android:id="@+id/bg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" android:layout_margin="10dp"
+            android:fadingEdge="none"/>
+    <ImageView
+            android:src="@android:color/black"
+            android:layout_width="0dp"
+            android:layout_height="0dp" android:id="@+id/black_bg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:fadingEdge="none" android:visibility="invisible"/>
+    <com.synnapps.carouselview.CarouselView
+            android:layout_height="0dp"
+            android:id="@+id/carousel_view"
+            android:layout_width="0dp"
+            app:slideInterval="3000"
+            app:autoPlay="true"
+            app:radius="6dp"
+            app:strokeColor="@color/colorPrimary"
+            app:strokeWidth="1dp"
+            app:pageColor="#00000000"
+            app:fillColor="#FFFFFFFF"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+    </com.synnapps.carouselview.CarouselView>
+
+</android.support.constraint.ConstraintLayout>

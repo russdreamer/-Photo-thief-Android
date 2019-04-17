@@ -13,9 +13,9 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.toolittlespot.socket_photo_loader_client.MainActivity
 import com.toolittlespot.socket_photo_loader_client.R
-import com.toolittlespot.socket_photo_loader_client.logics.Event
-import com.toolittlespot.socket_photo_loader_client.logics.Photo
+import com.toolittlespot.socket_photo_loader_client.logics.*
 import kotlinx.coroutines.*
 import java.io.IOException
 import java.io.InputStream
@@ -26,9 +26,13 @@ class Photos : Fragment() {
     private lateinit var eventName: String
     private lateinit var number: String
     private lateinit var gallery: LinearLayout
-    private lateinit var preview_view: ImageView
+    private lateinit var previewView: ImageView
     private lateinit var statusTxt: TextView
     private lateinit var tryAgainBtn: Button
+    private lateinit var clearAllBtn: Button
+    private lateinit var selectAllBtn: Button
+    private lateinit var selectedPhotos: HashMap<Long, ImageView>
+    private lateinit var photoItemList: ArrayList<View>
     private var threadJob: Job? = null
 
     fun passParams(eventName: String, runNumber: String){
@@ -41,6 +45,8 @@ class Photos : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         fragmentView =  inflater.inflate(R.layout.fragment_photos, container, false)
+        selectedPhotos = hashMapOf()
+        photoItemList = arrayListOf()
         configViews()
         return fragmentView
     }
@@ -49,7 +55,45 @@ class Photos : Fragment() {
         configPreview()
         configLoadLabel()
         configTryAgainBtn()
+        configSelectAllBtn()
+        configClearBtn()
+        configNextBtn()
         configGrid()
+    }
+
+    private fun configNextBtn() {
+        fragmentView.findViewById<Button>(R.id.next_btn).setOnClickListener {
+            if (selectedPhotos.isEmpty())
+                showToast(context!!, "Не выбрана ни одна фотография!")
+            else{
+                val fragment = DownloadingGallery()
+                fragment.passParams(selectedPhotos)
+                (activity as MainActivity).changeMainLayout(fragment)
+            }
+
+        }
+    }
+
+    private fun configClearBtn() {
+        clearAllBtn = fragmentView.findViewById(R.id.clear_all_btn)
+        clearAllBtn.setOnClickListener {
+            selectedPhotos.clear()
+            photoItemList.forEach { item->
+                val img = item.findViewById<ImageView>(R.id.photo_view)
+                img.scaleX = 1F
+                img.scaleY = 1F
+            }
+        }
+    }
+
+    private fun configSelectAllBtn() {
+        selectAllBtn = fragmentView.findViewById(R.id.select_all_btn)
+        selectAllBtn.setOnClickListener {
+            selectedPhotos.clear()
+            photoItemList.forEach { item->
+                item.callOnClick()
+            }
+        }
     }
 
     private fun configTryAgainBtn() {
@@ -66,8 +110,8 @@ class Photos : Fragment() {
     }
 
     private fun configPreview() {
-        preview_view = fragmentView.findViewById(R.id.preview_image)
-        preview_view.visibility = View.GONE
+        previewView = fragmentView.findViewById(R.id.preview_image)
+        previewView.visibility = View.GONE
     }
 
     private fun configGrid() {
@@ -95,13 +139,23 @@ class Photos : Fragment() {
 
             if (! photoViewList.isNullOrEmpty()){
                 addPhotosToGrid(photoViewList)
+                photoItemList.addAll(photoViewList)
                 statusTxt.visibility = View.GONE
+            }
+            else{
+                if(photoViewList == null) {
+                    setNetworkErrorMsg()
+                }
+                else {
+                    showToast(context!!, "Фотографий с участником под таким номером не найдено!")
+                    (activity as MainActivity).onBackPressed()
+                }
             }
 
         }
     }
 
-    private fun addPhotosToGrid(list: List<ImageView>) {
+    private fun addPhotosToGrid(list: List<View>) {
         var row: LinearLayout? = null
         var isRowComplete = true
 
@@ -114,7 +168,6 @@ class Photos : Fragment() {
                 )
                 row.weightSum = 2F
                 row.orientation = LinearLayout.HORIZONTAL
-                row.setPadding(0, 50, 0, 0)
                 row.addView(photo)
 
                 gallery.addView(row)
@@ -126,13 +179,13 @@ class Photos : Fragment() {
         }
     }
 
-    private fun getAllPhotoViews(): List<ImageView> {
+    private fun getAllPhotoViews(): List<View> {
         var hasNextPage = true
         val allPagePhotos = arrayListOf<Photo>()
 
-        var i = 1
+        var page = 1
         while (hasNextPage){
-            val link = Event.generateGalleryLink(eventName, number, i++)
+            val link = Event.generateGalleryLink(eventName, number, page++)
             val photos = Photo.gelAllPhotos(link)
 
             if (photos.isNotEmpty())
@@ -140,14 +193,24 @@ class Photos : Fragment() {
             else hasNextPage = false
         }
 
-        val photoViewList = arrayListOf<ImageView>()
+        val photoViewList = arrayListOf<View>()
 
         for (i in 0..allPagePhotos.lastIndex) {
-            val photo = getImageFromSrc(allPagePhotos[i].imgSrc)
-            configPhotoView(photo, allPagePhotos[i].imgSrc)
-            photoViewList.add(photo)
+            val photo = getDrawableFromSrc(allPagePhotos[i].imgSrc)
+
+            if (photo != null){
+                val item = getPhotoItem(photo)
+                configItemView(item, allPagePhotos[i])
+                photoViewList.add(item)
+            }
         }
         return photoViewList
+    }
+
+    private fun getPhotoItem(photo: Drawable): View {
+        val layout = layoutInflater.inflate(R.layout.photo_item, null)
+        layout.findViewById<ImageView>(R.id.photo_view).setImageDrawable(photo)
+        return layout
     }
 
     private fun setCriticalErrorMsg() {
@@ -160,48 +223,57 @@ class Photos : Fragment() {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun configPhotoView(photo: ImageView, photoSrc: String) {
-        photo.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, 400, 1F)
-        photo.scaleType = ImageView.ScaleType.FIT_CENTER
+    private fun configItemView(imgLayout: View, photo: Photo) {
+        val width = convertDpToPixels(100)
+        imgLayout.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, width, 1F)
 
-        val prevLink = photoSrc.replace(Regex("preview([0-9])"), "preview3")
-        val preview = getImageFromSrc(prevLink)
+        val prevLink = photo.imgSrc.replace(Regex("preview([0-9])"), "preview3")
+        val prevPath = getPreviewPath(prevLink, photo)
+        val imgView = imgLayout.findViewById<ImageView>(R.id.photo_view)
 
-        photo.setOnClickListener {
-
+        imgLayout.setOnClickListener {
+            if (selectedPhotos.remove(photo.id) != null){
+                imgView.scaleX = 1F
+                imgView.scaleY = 1F
+            }
+            else {
+                selectedPhotos[photo.id] = imgView
+                imgView.scaleX = 0.9F
+                imgView.scaleY = 0.9F
+            }
         }
 
-        photo.setOnLongClickListener {
-            preview_view.setImageDrawable(preview.drawable)
-            preview_view.visibility = View.VISIBLE
+        imgLayout.setOnLongClickListener {
+            previewView.setImageDrawable(Drawable.createFromPath(prevPath))
+            previewView.visibility = View.VISIBLE
             true
         }
 
-        photo.setOnTouchListener { v, event ->
+        imgLayout.setOnTouchListener { v, event ->
             v.onTouchEvent(event)
             if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL)
-                if (preview_view.visibility == View.VISIBLE){
-                    preview_view.visibility = View.GONE
-                    preview_view.setImageDrawable(null)
+                if (previewView.visibility == View.VISIBLE){
+                    previewView.visibility = View.GONE
+                    previewView.setImageDrawable(null)
                 }
             true
         }
     }
 
-    private fun getImageFromSrc(imgSrc: String): ImageView {
-        val img = ImageView(context)
-        val stream = URL(imgSrc).content as InputStream
-        stream.use {
-            val drawable = Drawable.createFromStream(stream, "img")
-            img.setImageDrawable(drawable)
+    private fun getPreviewPath(prevLink: String, photo: Photo): String? {
+        synchronized(this){
+
+            val bitmap = getBitmapFromSrc(prevLink)
+            return saveImgToAppFolder(bitmap, photo.id.toString(), context!!)
         }
-        return img
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         if (threadJob != null)
             threadJob!!.cancel()
+
+        photoItemList.clear()
     }
 }
 

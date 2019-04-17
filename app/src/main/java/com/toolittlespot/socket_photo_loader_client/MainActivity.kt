@@ -1,5 +1,7 @@
 package com.toolittlespot.socket_photo_loader_client
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -7,7 +9,9 @@ import android.view.Window
 import android.view.WindowManager
 import com.toolittlespot.socket_photo_loader_client.fragments.GettingWaysMenu
 import android.os.StrictMode
-
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
+import android.widget.Toast
 
 
 class MainActivity : AppCompatActivity() {
@@ -17,13 +21,34 @@ class MainActivity : AppCompatActivity() {
         makeFullScreen()
         setContentView(R.layout.activity_main)
         supportActionBar!!.hide()
-        setPermission()
-        startApplication()
+        requestPermission(this)
     }
 
-    private fun setPermission() {
+    private fun requestPermission(context: MainActivity) {
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
+
+        val hasPermission = (ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED)
+        if (!hasPermission) {
+            ActivityCompat.requestPermissions(
+                context,
+                Array(1) { Manifest.permission.WRITE_EXTERNAL_STORAGE },
+                REQUEST_WRITE_STORAGE
+            )
+        } else {
+            startApplication()
+        }
+
+
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        if (supportFragmentManager.backStackEntryCount == 0)
+            super.onBackPressed()
     }
 
     private fun startApplication() {
@@ -50,5 +75,19 @@ class MainActivity : AppCompatActivity() {
             transaction.addToBackStack(null)
 
         transaction.commit()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            REQUEST_WRITE_STORAGE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startApplication()
+                    Toast.makeText(this, PERMISSION_ACCEPT, Toast.LENGTH_LONG).show()
+                } else {
+                    finishAffinity()
+                }
+            }
+        }
     }
 }

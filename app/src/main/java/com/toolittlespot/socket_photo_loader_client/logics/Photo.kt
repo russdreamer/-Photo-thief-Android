@@ -1,5 +1,8 @@
 package com.toolittlespot.socket_photo_loader_client.logics
 
+import android.content.Context
+import android.graphics.drawable.Drawable
+import android.widget.ImageView
 import org.jsoup.Jsoup
 
 class Photo (val id: Long, val imgSrc: String){
@@ -16,6 +19,16 @@ class Photo (val id: Long, val imgSrc: String){
 
                 Photo(id, "$root$src")
             }
+        }
+
+        fun getPhotoByID(id: Long): Drawable? {
+            val root = "https://marathon-photo.ru/static2/preview1/stock-photo-"
+            return getDrawableFromSrc("$root$id.jpg")
+        }
+
+        fun getPreviewByID(id: Long): Drawable? {
+            val root = "https://marathon-photo.ru/static2/preview3/stock-photo-"
+            return getDrawableFromSrc("$root$id.jpg")
         }
     }
 }
