@@ -12,6 +12,7 @@ import android.widget.TextView
 import com.toolittlespot.socket_photo_loader_client.MainActivity
 
 import com.toolittlespot.socket_photo_loader_client.R
+import com.toolittlespot.socket_photo_loader_client.logics.getAlbumStorageDir
 import com.toolittlespot.socket_photo_loader_client.logics.showToast
 
 class OnIdGetter : Fragment() {

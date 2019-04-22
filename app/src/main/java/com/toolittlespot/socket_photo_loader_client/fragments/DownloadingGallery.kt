@@ -1,7 +1,7 @@
 package com.toolittlespot.socket_photo_loader_client.fragments
 
 
-import android.graphics.Bitmap
+import android.content.ContentValues
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v4.app.Fragment
@@ -12,13 +12,15 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.toolittlespot.socket_photo_loader_client.MainActivity
-import com.toolittlespot.socket_photo_loader_client.R
+import com.toolittlespot.socket_photo_loader_client.*
 import com.toolittlespot.socket_photo_loader_client.logics.PhotoDownload
 import com.toolittlespot.socket_photo_loader_client.logics.clearPreviewFolder
 import com.toolittlespot.socket_photo_loader_client.logics.convertDpToPixels
-import com.toolittlespot.socket_photo_loader_client.logics.getBitmapFromSrc
+import com.toolittlespot.socket_photo_loader_client.logics.getAlbumStorageDir
 import kotlinx.coroutines.*
+import java.io.*
+import java.net.Socket
+import java.util.*
 
 class DownloadingGallery : Fragment() {
     private lateinit var fragmentView: View
@@ -29,6 +31,7 @@ class DownloadingGallery : Fragment() {
     private lateinit var photoViews: ArrayList<PhotoDownload>
     private lateinit var resPhotoPath: ArrayList<String>
     private lateinit var threadJobs: ArrayList<Job>
+    private lateinit var connections: ArrayList<Closeable>
 
     fun passParams(photos: HashMap<Long, ImageView>){
         this.chosenPhotos = photos
@@ -43,6 +46,7 @@ class DownloadingGallery : Fragment() {
         photoViews = arrayListOf()
         resPhotoPath = arrayListOf()
         threadJobs = arrayListOf()
+        connections = arrayListOf()
         configViews()
         return fragmentView
     }
@@ -81,7 +85,7 @@ class DownloadingGallery : Fragment() {
     }
 
     private fun startDownload() {
-        GlobalScope.launch(Dispatchers.Main){
+        GlobalScope.launch{
             photoViews.forEach {
                 GlobalScope.launch(Dispatchers.Main){
                     downloadPhoto(it)
@@ -92,7 +96,7 @@ class DownloadingGallery : Fragment() {
 
     private suspend fun downloadPhoto(photo: PhotoDownload) {
         val imgPath = withTimeoutOrNull(60_000L) {
-            val task = async {
+            val task = GlobalScope.async {
                 downloadAndSave(photo)
             }
             try {
@@ -133,24 +137,64 @@ class DownloadingGallery : Fragment() {
         photo.isDownloaded = true
     }
 
-    private fun saveToGallery(bitmap: Bitmap, fileName: String): String? {
-        return MediaStore.Images.Media.insertImage(context!!.contentResolver, bitmap, fileName , null)
+    private fun downloadAndSave(photo: PhotoDownload): String? {
+        val socket = Socket(HOST, PORT)
+
+        val dis = DataInputStream(socket.getInputStream())
+        val dos = DataOutputStream(socket.getOutputStream())
+        connections.add(dis)
+        connections.add(dos)
+
+        dos.writeLong(photo.id)
+        val partSize = dis.readInt()
+
+        var percentage = 0
+        val step = 100 / (partSize + 1)
+
+        for (i in 1..partSize) {
+            val success = dis.readBoolean()
+            if (success){
+                percentage += step
+
+                activity!!.runOnUiThread {
+                    photo.percentage.text = "$percentage%"
+                }
+            }
+            else return null
+        }
+        val imageSize = dis.readInt()
+
+        return getImageAndSave(dis, imageSize, photo)
+
     }
 
-    private suspend fun downloadAndSave(photo: PhotoDownload): String? {
-        val delay = Math.random()+ 1
-        var perc = 0
-        repeat(20) {
-            perc += 5
-            delay(delay.toLong() * 1000)
-            photo.percentage.text = "$perc%"
-        }
-        photo.isDownloaded = true
-
+    private fun getImageAndSave(dis: DataInputStream, imageSize: Int, photo: PhotoDownload): String? {
         synchronized(this){
-            val bitmap = getBitmapFromSrc("https://marathon-photo.ru/static2/preview3/stock-photo-8064-8485-4385364.jpg")
-            return saveToGallery(bitmap, "${photo.id}.jpg")
+            val arr = ByteArray(imageSize)
+            dis.readFully(arr)
+
+            var file = getAlbumStorageDir()
+            file = file.resolve("${photo.id}.jpg")
+            val fos = FileOutputStream(file)
+            fos.use { fos.write(arr) }
+            resolveImgContent(file, photo.id.toString(), "sport photo")
+            photo.isDownloaded = true
+
+            return file.absolutePath
         }
+    }
+
+    private fun resolveImgContent(file: File, title: String, description: String) {
+        val values = ContentValues()
+        values.put(MediaStore.Images.Media.TITLE, title)
+        values.put(MediaStore.Images.Media.DESCRIPTION, description)
+        values.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis())
+        values.put(MediaStore.Images.ImageColumns.BUCKET_ID, file.toString().toLowerCase().hashCode())
+        values.put(MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME, file.name.toLowerCase())
+        values.put("_data", file.absolutePath)
+
+        val cr = context!!.contentResolver
+        cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
     }
 
     private fun addAllPreviews(previewMap: Map<Long, ImageView>) {
@@ -227,6 +271,11 @@ class DownloadingGallery : Fragment() {
     }
 
     private fun stopThreadJob() {
+        connections.forEach {
+            it.close()
+        }
+        connections.clear()
+
         threadJobs.forEach {
             it.cancel()
         }

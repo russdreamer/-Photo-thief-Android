@@ -2,6 +2,7 @@ package com.toolittlespot.socket_photo_loader_client.fragments
 
 
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
@@ -15,6 +16,7 @@ import com.synnapps.carouselview.CarouselView
 import com.toolittlespot.socket_photo_loader_client.R
 import com.toolittlespot.socket_photo_loader_client.logics.convertDpToPixels
 import com.toolittlespot.socket_photo_loader_client.logics.showToast
+import java.io.File
 
 class ResultViewer : Fragment() {
     private lateinit var fragmentView: View
@@ -88,14 +90,14 @@ class ResultViewer : Fragment() {
                 carouselViews[prevPosition - 1].setImageDrawable(null)
 
             if (position + 1 < carouselViews.size)
-                setPageView(position, carouselViews[position + 1])
+                setPageView(position + 1, carouselViews[position + 1])
         }
         else {
             if (prevPosition + 1 < carouselViews.size && carouselViews[prevPosition + 1].drawable != null)
                 carouselViews[prevPosition + 1].setImageDrawable(null)
 
             if (position - 1 >= 0)
-                setPageView(position, carouselViews[position - 1])
+                setPageView(position - 1, carouselViews[position - 1])
 
             else if (position != prevPosition - 1 && prevPosition == carouselViews.lastIndex){
                 carouselViews[prevPosition - 1].setImageDrawable(null)
@@ -107,15 +109,8 @@ class ResultViewer : Fragment() {
     }
 
     private fun setPageView(position: Int, imageView: ImageView) {
-        synchronized(this){
-            val url = Uri.parse(photoPathList[position])
-            val inputStream = context!!.contentResolver.openInputStream(url)
-            inputStream.use {
-                val img = BitmapFactory.decodeStream(inputStream)
-                imageView.setImageBitmap(img)
-                imageView.scaleType = ImageView.ScaleType.FIT_CENTER
-            }
-        }
+            imageView.setImageDrawable(Drawable.createFromPath(photoPathList[position]))
+            imageView.scaleType = ImageView.ScaleType.FIT_CENTER
     }
 
     private fun fullScreenView(){

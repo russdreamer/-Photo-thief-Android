@@ -3,12 +3,14 @@ package com.toolittlespot.socket_photo_loader_client.logics
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
+import com.toolittlespot.socket_photo_loader_client.BIG_PREVIEW
+import com.toolittlespot.socket_photo_loader_client.ROOT_SITE
+import com.toolittlespot.socket_photo_loader_client.SMALL_PREVIEW
 import org.jsoup.Jsoup
 
 class Photo (val id: Long, val imgSrc: String){
     companion object {
         fun gelAllPhotos(url: String): List<Photo>{
-            val root = "https://marathon-photo.ru"
             val doc = Jsoup.connect(url).get()
             val items = doc.getElementsByClass("item_list")
 
@@ -17,18 +19,16 @@ class Photo (val id: Long, val imgSrc: String){
                 val src = img.attr("src")
                 val id = getPhotoIdFromSrc(src).toLong()
 
-                Photo(id, "$root$src")
+                Photo(id, "$ROOT_SITE$src")
             }
         }
 
         fun getPhotoByID(id: Long): Drawable? {
-            val root = "https://marathon-photo.ru/static2/preview1/stock-photo-"
-            return getDrawableFromSrc("$root$id.jpg")
+            return getDrawableFromSrc("$ROOT_SITE$SMALL_PREVIEW$id.jpg")
         }
 
         fun getPreviewByID(id: Long): Drawable? {
-            val root = "https://marathon-photo.ru/static2/preview3/stock-photo-"
-            return getDrawableFromSrc("$root$id.jpg")
+            return getDrawableFromSrc("$ROOT_SITE$BIG_PREVIEW$id.jpg")
         }
     }
 }

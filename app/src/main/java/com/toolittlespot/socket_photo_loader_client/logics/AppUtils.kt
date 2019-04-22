@@ -6,7 +6,9 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable
+import android.os.Environment
 import android.support.design.widget.Snackbar
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
 import android.widget.Toast
@@ -63,6 +65,18 @@ fun clearPreviewFolder(context: Context){
     val dir = getApplicationFolder("preview", context)
     if (dir.exists())
         dir.delete()
+}
+
+fun getAlbumStorageDir(): File {
+    val file = File(
+        Environment.getExternalStoragePublicDirectory(
+            Environment.DIRECTORY_PICTURES
+        ),"Photo Getter")
+
+    if (!file.mkdirs()) {
+
+    }
+    return file
 }
 
 private fun getElementByRegex(text: String, regex: Pattern, group: Int): List<String> {

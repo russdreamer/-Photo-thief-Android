@@ -1,14 +1,17 @@
 package com.toolittlespot.socket_photo_loader_client.logics
 
+import com.toolittlespot.socket_photo_loader_client.EVENTS
+import com.toolittlespot.socket_photo_loader_client.PAST_COMPETITION
+import com.toolittlespot.socket_photo_loader_client.ROOT_SITE
 import org.jsoup.Jsoup
 import java.net.URLEncoder
 
 class Event(val name: String, val date: String){
     companion object {
         fun getAllEvents(): List<Event>{
-            val eventsURL = "https://marathon-photo.ru/members/categories.php"
+            val eventsURL = "$ROOT_SITE$EVENTS"
             val doc = Jsoup.connect(eventsURL).get()
-            val pastComp = doc.getElementsByClass("past_competitions_list")
+            val pastComp = doc.getElementsByClass(PAST_COMPETITION)
             val table = pastComp.select("table")
             val events = table.select("tr")
 
@@ -20,7 +23,7 @@ class Event(val name: String, val date: String){
         }
 
         fun generateGalleryLink(eventName: String, number: String, page: Int): String{
-            val rootURL = "https://marathon-photo.ru/members/ajax.php?page="
+            val rootURL = "$ROOT_SITE/members/ajax.php?page="
             val competition = "&competition="
             val person = "&sphoto=on&search="
             val tailLink = "&partly=0&search_by_title=0"
