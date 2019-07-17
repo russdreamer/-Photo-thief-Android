@@ -1,4 +1,4 @@
-# Little thief «Android»
+# «Little Thief» Android
 <p align="center"><img src="https://raw.githubusercontent.com/russdreamer/Photo-thief-Android/master/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png"></p>
 
 Android client demonstrating some service's vulnerabilities in getting a product without payment. It's based on coroutines.</br>
